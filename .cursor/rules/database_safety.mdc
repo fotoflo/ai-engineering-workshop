@@ -1,0 +1,252 @@
+---
+description: "Database safety standards and migration procedures for zero data loss operations"
+alwaysApply: true
+globs:
+  [
+    "prisma/schema.prisma",
+    "prisma/migrations/**/*.sql",
+    "src/lib/transforms/**/*.ts",
+    "src/server/db/**/*.ts",
+    "scripts/firebase-to-supabase/**/*.ts",
+    "scripts/firebase-to-supabase/**/*.js",
+    "**/database/**/*.ts",
+    "**/migration/**/*.ts",
+  ]
+---
+
+# Database Safety Standards
+
+**APPLY TO: All database operations in flexbike-next repository**
+
+## Core Principles
+
+### Zero Data Loss Guarantee
+
+- **Never** run destructive operations without backups
+- **Always** validate transformations before sync
+- **Manual review** required for production migrations
+- **Test all changes** in staging before production
+
+### Schema-First Approach
+
+- **Always update `prisma/schema.prisma` first**
+- **Run `npx prisma validate && npx prisma generate`** after schema changes
+- **Use generated types** throughout the application
+- **Validate all inputs/outputs** with Zod schemas
+
+## Migration Strategies
+
+### Safe Additions (80% of cases)
+
+```sql
+-- ✅ SAFE: Add nullable columns
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS "notes" TEXT;
+
+-- ✅ SAFE: Add indexes
+CREATE INDEX IF NOT EXISTS idx_bookings_userId ON public.bookings("userId");
+
+-- ✅ SAFE: Add constraints
+ALTER TABLE public.companies ADD CONSTRAINT IF NOT EXISTS companies_slug_key UNIQUE (slug);
+```
+
+### High-Risk Operations (20% of cases)
+
+- **REQUIRES**: Shadow table backup strategy
+- **REQUIRES**: Business approval for production
+- **REQUIRES**: Comprehensive rollback plan
+
+## Type Safety Requirements
+
+### Always Use Generated Types
+
+```typescript
+// ✅ CORRECT: Use Prisma + Zod types
+import type { User, Booking } from "@prisma/client";
+import { UserCreateSchema, BookingUpdateSchema } from "@/generated/zod";
+
+function createUser(data: z.infer<typeof UserCreateSchema>) {
+  return prisma.user.create({ data });
+}
+```
+
+### Never Use Unsafe Patterns
+
+```typescript
+// ❌ WRONG: Shortened prisma variables
+const p = prisma; // Breaks consistency
+
+// ❌ WRONG: Type casting
+(prisma as any).bookings.findMany(); // Loses type safety
+
+// ❌ WRONG: Raw SQL in application code
+await sql`SELECT * FROM users`; // Bypasses validation
+```
+
+## Environment-Specific Rules
+
+### Development
+
+- May use `prisma migrate dev` for rapid iteration
+- Quick resets acceptable for experimentation
+- Focus on speed over safety
+
+### Preview/Staging
+
+- Extra validation steps required
+- Mirror production constraints where possible
+- Test migrations before production
+
+### Production
+
+- **MANDATORY**: Manual SQL review and approval
+- **MANDATORY**: Backup verification before execution
+- **MANDATORY**: Rollback plan documented and tested
+- **NEVER**: Use automated migration tools
+
+## Database Operations
+
+### Query Patterns
+
+```typescript
+// ✅ GOOD: Select only needed fields
+const users = await prisma.user.findMany({
+  select: { id: true, name: true, email: true },
+  where: { active: true },
+});
+
+// ✅ GOOD: Use includes for relations
+const bookings = await prisma.booking.findMany({
+  include: {
+    user: { select: { name: true, email: true } },
+    product: { select: { name: true, price: true } },
+  },
+});
+```
+
+### Transaction Requirements
+
+```typescript
+// ✅ REQUIRED: Use transactions for multi-step operations
+export async function transferBooking(fromUserId: string, toUserId: string, bookingId: string) {
+  return await prisma.$transaction(async (tx) => {
+    // All operations within transaction
+    const booking = await tx.booking.findFirst({...});
+    const updated = await tx.booking.update({...});
+    await tx.auditLog.create({...});
+    return updated;
+  });
+}
+```
+
+## API Standards
+
+### Input/Output Validation
+
+```typescript
+// ✅ REQUIRED: Validate all external data
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const bookingData = BookingCreateSchema.parse(body); // Validate input
+  const booking = await prisma.booking.create({ data: bookingData });
+  return NextResponse.json(BookingSchema.parse(booking)); // Validate output
+}
+```
+
+### Error Handling
+
+```typescript
+// ✅ REQUIRED: Proper error handling
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+
+export async function handleDatabaseOperation() {
+  try {
+    return await prisma.user.findUnique({ where: { id } });
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      switch (error.code) {
+        case "P2025":
+          throw new NotFoundError("User not found");
+        case "P2002":
+          throw new ValidationError("Unique constraint violation");
+        default:
+          throw new DatabaseError("Database operation failed");
+      }
+    }
+    throw error;
+  }
+}
+```
+
+## Backup Requirements
+
+### Pre-Migration Backup
+
+```bash
+# ✅ REQUIRED: Create full backup before any migration
+pg_dump --host=$DB_HOST --username=$DB_USER --dbname=$DB_NAME \
+  --format=custom --compress=9 --verbose \
+  --file="backup_$(date +%Y%m%d_%H%M%S).dump"
+```
+
+### Backup Verification
+
+```bash
+# ✅ REQUIRED: Test backup integrity
+pg_restore --list backup.dump > /dev/null && echo "Backup valid"
+```
+
+## Emergency Procedures
+
+### Immediate Rollback (< 5 minutes)
+
+1. Use shadow table to restore if available
+2. Drop partially migrated objects
+3. Restore from backup table
+
+### Database Reset (Last Resort)
+
+- **CURRENTLY AVAILABLE**: Due to Firebase shadow data
+- **FUTURE**: Will be unavailable after Firebase transition
+- Requires business approval
+
+## Related Standards
+
+### Commit Standards
+
+- **See**: `.cursor/rules/git-commits/RULE.md`
+- Database changes require specific commit messages
+- Migration commits must reference backup status
+
+### Testing Standards
+
+- **See**: `.cursor/rules/testing/RULE.md`
+- Database operations require comprehensive testing
+- Migration testing must include rollback scenarios
+
+### API Standards
+
+- **See**: `.cursor/rules/api-routes/RULE.md`
+- Database interactions must follow API patterns
+- All database operations require proper validation
+
+## Index of Database Documentation
+
+### Migration Guides
+
+- `docs/database/README.md` - Database overview and navigation
+- `docs/database/migration-guide.md` - Complete migration procedures
+- `docs/database/schema.md` - Current schema reference
+- `docs/database/firebase-supabase-sync.md` - Real-time sync system
+
+### API Patterns
+
+- `docs/api/README.md` - API overview
+- `docs/api/authentication.md` - Auth patterns
+- `docs/api/search.md` - Search API
+- `docs/api/examples.md` - Usage examples
+
+### Architecture
+
+- `docs/architecture/overview.md` - System architecture
+- `docs/architecture/data-flow.md` - Data flow patterns
+- `docs/architecture/routing.md` - Next.js routing patterns

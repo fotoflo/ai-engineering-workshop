@@ -1,0 +1,14 @@
+---
+description: "Core coding principles including DRY, variable naming, and TypeScript standards"
+alwaysApply: true
+---
+
+# Code Style
+
+<ALWAYS: DRY/>
+
+- **Variable names:** Clear and descriptive (never `data`, `result`, `temp`)
+- **Functions:** Extract reusable logic, max 50 lines
+- **Components:** Functional components with hooks
+- **Types:** Full TypeScript coverage for all new code
+- **Schema:** Always stored in `/schema.prisma`

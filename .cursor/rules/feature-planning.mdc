@@ -1,0 +1,68 @@
+---
+description: "Feature planning standards with deep clarification, edge case analysis, and branch management"
+alwaysApply: true
+---
+
+# Feature Planning Standards
+
+**APPLY TO: All new feature development and planning phases in flexbike-next repository**
+
+## Deep Clarification Protocol
+
+**Before writing any code, ask these questions:**
+
+### Core Requirements
+
+- What exactly should this feature do? (Describe user journey)
+- Who is the target user and what problem are we solving?
+- What success metrics define completion?
+
+### Technical Scope
+
+- Which existing systems/components will this touch?
+- Are there database schema changes needed?
+- What external APIs or services are involved?
+
+### Edge Cases & Conflicts
+
+- What happens if the user is offline?
+- How does this interact with existing features?
+- What validation failures could occur?
+- Are there race conditions or concurrency issues?
+
+## Branch Creation Standards
+
+### Feature Branch Naming
+
+```
+feature/<scope>-<description-kebab-case>
+```
+
+**Examples:**
+
+- `feat/booking-calendar-view`
+- `feat/admin-company-management`
+- `feat/api-search-filters`
+
+## Planning Mode Questions
+
+**Ask these before proceeding:**
+
+1. **Business Logic:** What's the exact business rule here?
+2. **Data Flow:** Where does this data come from/go to?
+3. **Error Handling:** What happens when this fails?
+4. **Performance:** Will this impact page load times?
+5. **Security:** Are there authentication/authorization concerns?
+6. **Testing:** How will we verify this works correctly?
+
+### Collision Detection
+
+- Check overlapping database tables, shared components, API endpoints
+- Does this duplicate existing functionality?
+- Will this break current user workflows?
+
+### Edge Case Solutions
+
+1. **Describe scenario** → **Propose strategy** → **Define fallback**
+
+**Only start coding after all questions are answered and documented.**

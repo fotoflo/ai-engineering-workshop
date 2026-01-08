@@ -1,0 +1,116 @@
+---
+description: "Git commit standards and conventional commit formatting for the Flexbike repository"
+alwaysApply: true
+---
+
+# Git Commit Standards
+
+**APPLY TO: All git operations in flexbike-next repository**
+
+## Commit Message Format
+
+Always use conventional commits format:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `refactor`: Code refactoring
+- `docs`: Documentation changes
+- `test`: Test additions/changes
+- `chore`: Maintenance tasks
+- `style`: Code style changes (formatting, etc.)
+
+### Scopes (Flexbike-specific)
+
+- `admin`: Admin interface changes
+- `api`: API route changes
+- `components`: Component changes
+- `database`: Database schema/migration changes
+- `firebase`: Firebase functions/changes
+- `hooks`: React hooks changes
+- `transforms`: Data transformation logic
+- `booking`: Booking-related features
+- `company`: Company-related features
+
+### Examples
+
+- `feat(admin): add company bookings table`
+- `fix(api): resolve booking creation validation`
+- `refactor(components): extract booking form logic`
+- `chore(database): update Prisma schema`
+
+## Workflow Rules
+
+### Before Committing
+
+1. **Run `git status --porcelain`** to see all changes
+2. **Group changes by work domain** (admin, api, components, database, etc.)
+3. **Never commit `.env` files** unless explicitly requested
+4. **Test changes** before committing
+
+### Commit Strategy
+
+- **Atomic commits**: One logical change per commit
+- **Descriptive messages**: Explain what and why, not just what
+- **Small commits**: Keep under 400 LOC when possible
+- **Single responsibility**: Don't mix unrelated changes
+
+### Push & Deploy Rules
+
+- **Never push or deploy without confirmation**
+- **Never deploy to production automatically**
+- **Always warn before production deployments**
+- **Preview deployments are automatic** on git push
+- **Production requires explicit `deploy:prod` command**
+
+### Environment Context
+
+- **Preview**: `preview.flexbike.app` (preview database + production Firebase)
+- **Production**: `flexbike.app` (production database + production Firebase)
+
+### Database Changes
+
+- **Detect schema changes** in `prisma/schema.prisma` or `prisma/migrations/`
+- **Prompt for migrations** when database changes are detected
+- **Never run migrations automatically** in production
+- **Always backup before destructive operations**
+
+### Error Handling
+
+- **Never auto-resolve conflicts** - prompt user for manual resolution
+- **Stop on deployment failures** - don't retry automatically
+- **Display error details** clearly to user
+- **Offer rollback options** for failed operations
+
+### History Rewriting Operations
+
+**CRITICAL: Require explicit user confirmation before rewriting git history**
+
+#### When Rewriting History (git filter-repo, git filter-branch, etc.)
+
+1. **List all files** - Show complete paths and sizes of files being removed, describe contents if possible
+2. **Get confirmation** - User must explicitly approve before proceeding
+3. **Warn about force push** - History changes require `git push --force-with-lease`
+
+#### Files to Remove from History
+
+- Large files, secrets, backups, duplicate/old files
+
+## Guardrails
+
+- Never commit `.env` unless explicitly asked
+- Never commit outside selected work group
+- Never push or deploy without confirmation
+- Never run builds automatically
+- On conflicts: prompt user to stash/discard/resolve manually
+- Always warn before production deployments
+- Require explicit confirmation for database migrations

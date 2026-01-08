@@ -1,0 +1,381 @@
+---
+description: "TypeScript and React coding standards including DRY principles, type safety, and component patterns"
+alwaysApply: true
+---
+
+# TypeScript & React Coding Standards
+
+**APPLY TO: All TypeScript/React files in flexbike-next repository**
+
+## Core Principles
+
+### DRY (Don't Repeat Yourself)
+
+- **Extract reusable logic** into functions/utilities
+- **Create shared components** instead of duplicating UI
+- **Use constants** for repeated values
+- **Apply patterns consistently** across similar code
+
+### Type Safety First
+
+- **Full TypeScript coverage** for all new code
+- **Use generated types** from Prisma/Zod schemas
+- **Explicit types** over implicit `any`
+- **Interface definitions** for complex objects
+
+## Variable Naming Standards
+
+### Clear & Descriptive Names
+
+```typescript
+// ✅ CORRECT: Descriptive names
+const userBookings = await fetchUserBookings(userId);
+const bookingTotal = calculateBookingTotal(booking);
+const isPaymentProcessed = checkPaymentStatus(payment);
+
+// ❌ WRONG: Unclear names
+const data = getUserData(id); // What data?
+const result = processItems(items); // What result?
+const temp = calculateTotal(items); // Temporary what?
+```
+
+### Consistent Patterns
+
+```typescript
+// ✅ CORRECT: Consistent boolean prefixes
+const isActive = user.status === 'active';
+const hasPermission = checkUserPermission(user, 'admin');
+const canEdit = user.role === 'admin' || user.role === 'moderator';
+
+// ✅ CORRECT: Consistent array/collection names
+const userBookings: Booking[] = [];
+const companyProducts: Product[] = [];
+const activeUsers: User[] = [];
+
+// ✅ CORRECT: Consistent function naming
+function getUserById(id: string): Promise<User> { ... }
+function fetchUserBookings(userId: string): Promise<Booking[]> { ... }
+function calculateBookingTotal(booking: Booking): number { ... }
+```
+
+## Function Standards
+
+### Size Limits & Structure
+
+```typescript
+// ✅ CORRECT: Functions under 50 lines
+function calculateBookingTotal(booking: Booking): number {
+  const basePrice = booking.product.price;
+  const duration = getBookingDuration(booking);
+  const discount = calculateDiscount(booking);
+  const tax = calculateTax(basePrice - discount);
+
+  return basePrice + duration.fee - discount + tax;
+}
+
+// ❌ WRONG: Functions over 50 lines - extract helpers
+function processBooking(booking: Booking) {
+  // 80+ lines of mixed logic
+  // Validation, calculation, database updates, notifications
+}
+```
+
+### Pure Functions When Possible
+
+```typescript
+// ✅ PREFERRED: Pure functions
+function calculateDiscount(price: number, discountRate: number): number {
+  return price * (discountRate / 100);
+}
+
+function formatCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(amount);
+}
+
+// ✅ ACCEPTABLE: Side effects clearly indicated
+function sendBookingConfirmation(booking: Booking): Promise<void> {
+  // Side effect: sends email
+  return emailService.sendConfirmation(booking);
+}
+```
+
+## Component Standards
+
+### Functional Components with Hooks
+
+```typescript
+// ✅ CORRECT: Modern React patterns
+import { useState, useEffect } from "react";
+
+interface BookingCardProps {
+  booking: Booking;
+  onEdit: (booking: Booking) => void;
+}
+
+export function BookingCard({ booking, onEdit }: BookingCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  return (
+    <div className="booking-card">
+      <h3>{booking.title}</h3>
+      <button onClick={() => onEdit(booking)}>Edit Booking</button>
+    </div>
+  );
+}
+```
+
+### Props Interface Definitions
+
+```typescript
+// ✅ REQUIRED: Explicit prop interfaces
+interface UserProfileProps {
+  user: User;
+  isEditable?: boolean;
+  onUpdate?: (user: User) => void;
+  className?: string;
+}
+
+export function UserProfile({
+  user,
+  isEditable = false,
+  onUpdate,
+  className,
+}: UserProfileProps) {
+  // Component logic
+}
+```
+
+### Client Components Clearly Marked
+
+```typescript
+// ✅ REQUIRED: "use client" for interactive components
+"use client";
+
+import { useState } from "react";
+
+export function InteractiveBookingForm() {
+  const [formData, setFormData] = useState({});
+
+  // Client-side interactivity
+}
+```
+
+## TypeScript Patterns
+
+### Use Generated Types
+
+```typescript
+// ✅ REQUIRED: Use Prisma generated types
+import type { User, Booking, Product } from "@prisma/client";
+import { UserCreateSchema, BookingUpdateSchema } from "@/generated/zod";
+
+// Type-safe function parameters
+function createUser(data: z.infer<typeof UserCreateSchema>): Promise<User> {
+  return prisma.user.create({ data });
+}
+
+// Type-safe database queries
+async function getUserBookings(userId: string): Promise<Booking[]> {
+  return prisma.booking.findMany({
+    where: { userId },
+    include: { product: true },
+  });
+}
+```
+
+### Custom Type Definitions
+
+```typescript
+// ✅ CORRECT: Custom types for domain concepts
+type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
+
+interface BookingSummary {
+  id: string;
+  status: BookingStatus;
+  totalPrice: number;
+  startDate: Date;
+  endDate: Date;
+  product: {
+    name: string;
+    price: number;
+  };
+}
+
+// ✅ CORRECT: Generic utility types
+type ApiResponse<T> = {
+  data: T;
+  error?: string;
+  pagination?: {
+    page: number;
+    total: number;
+  };
+};
+```
+
+## Import/Export Patterns
+
+### Consistent Import Organization
+
+```typescript
+// ✅ CORRECT: Grouped and sorted imports
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import type { NextRequest, NextResponse } from "next/server";
+
+import { prisma } from "@/server/db/prisma";
+import { UserCreateSchema } from "@/generated/zod";
+import type { User, Booking } from "@prisma/client";
+
+import { formatCurrency } from "@/lib/utils";
+import { sendEmail } from "@/lib/email";
+```
+
+### Named Exports Preferred
+
+```typescript
+// ✅ PREFERRED: Named exports
+export function BookingCard() { ... }
+export function UserProfile() { ... }
+export const BOOKING_STATUSES = ['pending', 'confirmed'] as const;
+
+// ❌ AVOID: Default exports
+export default function BookingCard() { ... }
+```
+
+## Error Handling Patterns
+
+### Consistent Error Types
+
+```typescript
+// ✅ CORRECT: Custom error classes
+export class ValidationError extends Error {
+  constructor(message: string, public field: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+export class NotFoundError extends Error {
+  constructor(resource: string) {
+    super(`${resource} not found`);
+    this.name = "NotFoundError";
+  }
+}
+
+// ✅ CORRECT: Error handling with proper types
+try {
+  const user = await getUserById(id);
+  if (!user) {
+    throw new NotFoundError("User");
+  }
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    return NextResponse.json({ error: error.message }, { status: 404 });
+  }
+  if (error instanceof ValidationError) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+  throw error; // Re-throw unexpected errors
+}
+```
+
+## Performance Considerations
+
+### Memoization When Needed
+
+```typescript
+// ✅ CORRECT: Memoize expensive calculations
+import { useMemo, useCallback } from "react";
+
+function BookingList({ bookings, filter }) {
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((booking) => {
+      // Expensive filtering logic
+      return matchesFilter(booking, filter);
+    });
+  }, [bookings, filter]);
+
+  const handleBookingClick = useCallback((booking) => {
+    // Stable function reference
+    navigateToBooking(booking.id);
+  }, []);
+
+  return (
+    <div>
+      {filteredBookings.map((booking) => (
+        <BookingCard
+          key={booking.id}
+          booking={booking}
+          onClick={handleBookingClick}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+## File Organization Standards
+
+### Component File Structure
+
+```
+src/app/components/
+├── BookingCard.tsx         # Main component
+├── BookingCard.test.tsx    # Tests alongside component
+└── BookingCard/
+    ├── index.ts           # Barrel export
+    ├── BookingCard.tsx    # Main component (if complex)
+    ├── hooks.ts           # Component-specific hooks
+    ├── utils.ts           # Component utilities
+    └── types.ts           # Component types
+```
+
+### Consistent File Naming
+
+- **Components**: `PascalCase.tsx`
+- **Hooks**: `use*.ts`
+- **Utilities**: `kebab-case.ts`
+- **Types**: `*.types.ts` or `types.ts`
+- **Tests**: `*.test.ts` or `*.spec.ts`
+
+## Related Standards
+
+### Database Operations
+
+- **See**: `.cursor/rules/database-safety/RULE.md`
+- Database interactions must follow type safety requirements
+- Generated Prisma types required for all database operations
+
+### API Routes
+
+- **See**: `.cursor/rules/api-routes/RULE.md`
+- API endpoints must follow TypeScript patterns
+- Zod validation required for all external data
+
+### Testing Standards
+
+- **See**: `.cursor/rules/testing/RULE.md`
+- All code must be testable with current patterns
+- Type safety enables better test coverage
+
+## Index of Coding Documentation
+
+### Architecture Guides
+
+- `docs/architecture/overview.md` - System architecture patterns
+- `docs/architecture/data-flow.md` - Data flow and state management
+- `docs/architecture/routing.md` - Next.js routing conventions
+
+### Component Patterns
+
+- `docs/features/README.md` - Component usage patterns
+- `docs/guides/refactoring.md` - Refactoring component code
+- `docs/guides/testing.md` - Component testing patterns
+
+### Type Safety
+
+- `docs/database/schema.md` - Generated type definitions
+- `docs/api/examples.md` - Type-safe API usage examples

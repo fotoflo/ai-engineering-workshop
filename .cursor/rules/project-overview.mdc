@@ -1,0 +1,16 @@
+---
+description: "Flexbike project overview including tech stack, architecture, and deployment"
+alwaysApply: true
+---
+
+# Project Overview
+
+**Flexbike** is a Next.js-based motorcycle rental marketplace that enables users to browse and book bikes from verified rental companies. The application uses Firebase for real-time data and Supabase for structured storage.
+
+**Tech Stack:**
+
+- **Frontend:** Next.js 16.1 (App Router), React, Tailwind CSS, Proxy, (middleware is deprecated)
+- **Database:** Supabase PostgreSQL with Prisma ORM
+- **Real-time:** Websockets
+- **Legacy Support** Firebase Firestore with bidirectional sync
+- **Deployment:** Vercel with preview/production environments

@@ -1,0 +1,10 @@
+---
+description: "Git workflow standards including commit conventions and branching strategy"
+alwaysApply: true
+---
+
+# Git Workflow
+
+- **Commits:** Conventional format (`feat(scope): description`)
+- **Branches:** Feature branches from `main`
+- **PRs:** Keep under 400 LOC for easier review

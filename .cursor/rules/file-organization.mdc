@@ -1,0 +1,11 @@
+---
+description: "File naming conventions and organization patterns"
+alwaysApply: true
+---
+
+# File Organization
+
+- **Components:** `PascalCase.tsx` in `src/app/components/`
+- **Hooks:** `use*.ts` in `src/app/hooks/`
+- **Utilities:** `kebab-case.ts` in `src/lib/` or `src/utils/`
+- **API routes:** `route.ts` in `src/app/api/*/`

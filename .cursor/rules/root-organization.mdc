@@ -1,0 +1,29 @@
+---
+description: "Prevents files from accumulating in root directory - read docs/README.md first"
+alwaysApply: true
+globs: ["[^/]+"]
+---
+
+# Root Directory Organization
+
+**❌ DO NOT save files directly to the root directory**
+
+## Where to Put Files Instead
+
+**📚 Documentation**: `docs/` directory (see `docs/README.md`)
+**🔧 Scripts**: `scripts/` directory
+**⚙️ Configuration**: Appropriate config directories
+**📦 Dependencies**: `package.json`, `*-lock.*` files belong in root
+**🚀 Deployment**: `vercel.json`, deployment configs belong in root
+
+## Before Adding Files Here
+
+1. **Read**: `docs/README.md` - Complete file organization guide
+2. **Check**: `AGENTS.md` - Directory structure and standards
+3. **Follow**: Existing patterns in the codebase
+
+**Exception**: Core project files (`package.json`, `README.md`, etc.) belong in root.
+
+---
+
+**🎯 Goal**: Keep root directory clean and navigable

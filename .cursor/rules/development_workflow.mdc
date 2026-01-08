@@ -1,0 +1,120 @@
+---
+description: "Critical development workflow rules for commits, builds, deployments, and database operations"
+alwaysApply: true
+---
+
+# Development Workflow Safety Rules
+
+**APPLY TO: All development operations in flexbike-next repository**
+
+## Critical Safety Rules
+
+### Never Commit, Build, or Deploy Without Explicit User Permission
+
+**🚨 ABSOLUTE RULE: Never perform any of these actions without explicit user consent:**
+
+- **Commits**: Do not commit code changes automatically
+- **Builds**: Do not run build commands (`npm run build`, `pnpm build`, etc.)
+- **Deployments**: Do not deploy to any environment (preview, production, etc.)
+
+### Commit Restrictions
+
+**Reasoning**: Code has not yet passed user acceptance testing
+- All commits must be manually approved by the user
+- Never auto-commit changes, even if they seem trivial
+- Always wait for explicit user instruction to commit
+
+### Build Restrictions
+
+**Reasoning**: User maintains active development server
+- Building will corrupt the build directory
+- User must manually restart dev server after builds
+- Never interrupt active development workflow
+
+### Deployment Restrictions
+
+**Reasoning**: Production safety and user acceptance testing
+- Deployments require explicit confirmation
+- Never auto-deploy, even to preview environments
+- All deployments must pass user acceptance testing first
+
+## Database Operations
+
+### Never Reset Database
+
+**🚨 ABSOLUTE RULE: Never reset or modify the database**
+
+- Do not run database reset commands
+- Do not run database migrations automatically
+- Do not perform destructive database operations
+- Even with user "consent" - never execute database resets
+
+### Database Reset Protocol
+
+If database reset is absolutely necessary:
+1. **Stop**: Do not execute the command yourself
+2. **Provide**: Give user the exact command to run
+3. **Warn**: Clearly explain the consequences
+4. **Wait**: Let user execute it manually
+
+```bash
+# ❌ NEVER run this yourself:
+pnpm prisma:reset
+
+# ✅ Instead, provide this to user:
+pnpm prisma:reset
+```
+
+## Development Server Management
+
+### Respect Active Development Sessions
+
+- Never interrupt running dev servers
+- Never rebuild while dev server is active
+- Never perform operations that corrupt build state
+- Always assume user has active development session
+
+## Exception Handling
+
+### When Rules Cannot Be Followed
+
+If you absolutely must perform a restricted action:
+1. **Stop**: Immediately halt operation
+2. **Explain**: Clearly state why you're unable to proceed
+3. **Ask**: Request explicit user permission
+4. **Wait**: Do not proceed without clear consent
+
+## Related Safety Standards
+
+### Database Safety
+- **See**: `.cursor/rules/database_safety.mdc`
+- Database operations require additional safety protocols
+- Never combine with deployment operations
+
+### Git Workflow
+- **See**: `.cursor/rules/git_commits.mdc`
+- Git operations follow strict approval workflows
+- Never automate commit operations
+
+## Emergency Procedures
+
+### If Accidental Operation Occurs
+
+1. **Stop**: Immediately cease all operations
+2. **Inform**: Alert user of the accidental action
+3. **Assess**: Evaluate impact and rollback options
+4. **Wait**: Let user decide next steps
+
+## Index of Safety Documentation
+
+### Development Guides
+- `docs/README.md` - Development workflow overview
+- `AGENTS.md` - Agent behavior guidelines
+
+### Deployment Guides
+- `.cursor/commands/deploy-production.md` - Production deployment procedures
+- `docs/README.md` - Environment management
+
+### Database Guides
+- `docs/database/README.md` - Database management
+- `prisma/README.md` - Schema management

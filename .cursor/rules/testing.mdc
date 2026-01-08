@@ -1,0 +1,463 @@
+---
+description: "Testing standards and requirements for unit, integration, and API testing with Jest and React Testing Library"
+alwaysApply: true
+globs:
+  [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.test.js",
+    "**/*.test.jsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__/**/*",
+    "src/__tests__/**/*",
+    "tests/**/*",
+    "e2e/**/*",
+  ]
+---
+
+# Testing Standards & Requirements
+
+**APPLY TO: All test files and testing workflows in flexbike-next repository**
+
+## Test Organization Structure
+
+### File Placement & Naming
+
+```
+src/
+├── __tests__/                    # Test files alongside source
+│   ├── components/
+│   │   ├── BookingCard.test.tsx
+│   │   └── UserProfile.test.tsx
+│   ├── hooks/
+│   │   ├── useBookingState.test.ts
+│   │   └── useCompanyBikes.test.ts
+│   ├── utils/
+│   │   ├── booking-utils.test.ts
+│   │   └── date-helpers.test.ts
+│   └── api/
+│       └── bookings.test.ts
+├── app/
+│   ├── api/
+│   │   └── bookings/
+│   │       └── route.test.ts     # API route tests
+│   └── components/
+│       └── BookingForm/
+│           └── BookingForm.test.tsx
+```
+
+### Test Categories Required
+
+#### Unit Tests
+
+- **Location**: `__tests__/` alongside source files
+- **Coverage**: Functions, utilities, hooks, components
+- **Mocking**: External dependencies (Firebase, APIs)
+- **Focus**: Isolated functionality testing
+
+#### Integration Tests
+
+- **Location**: `__tests__/integration/` or feature-specific
+- **Coverage**: Component interactions, API calls, data flow
+- **Mocking**: Minimal - test real interactions where safe
+- **Focus**: End-to-end feature workflows
+
+#### API Tests
+
+- **Location**: `src/app/api/**/route.test.ts`
+- **Coverage**: HTTP endpoints, request/response validation
+- **Mocking**: Database layer, external services
+- **Focus**: API contract and error handling
+
+## Testing Patterns & Standards
+
+### Component Testing with React Testing Library
+
+```typescript
+// ✅ REQUIRED: RTL patterns for components
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { BookingCard } from "./BookingCard";
+
+describe("BookingCard", () => {
+  const mockBooking = {
+    id: "1",
+    title: "Test Booking",
+    startDate: new Date("2024-01-01"),
+    endDate: new Date("2024-01-05"),
+  };
+
+  it("displays booking information correctly", () => {
+    render(<BookingCard booking={mockBooking} />);
+
+    expect(screen.getByText("Test Booking")).toBeInTheDocument();
+    expect(screen.getByText(/January 1.*January 5/)).toBeInTheDocument();
+  });
+
+  it("calls onEdit when edit button is clicked", () => {
+    const mockOnEdit = jest.fn();
+    render(<BookingCard booking={mockBooking} onEdit={mockOnEdit} />);
+
+    const editButton = screen.getByRole("button", { name: /edit/i });
+    fireEvent.click(editButton);
+
+    expect(mockOnEdit).toHaveBeenCalledWith(mockBooking);
+  });
+});
+```
+
+### Hook Testing Patterns
+
+```typescript
+// ✅ REQUIRED: Hook testing with @testing-library/react-hooks
+import { renderHook, act, waitFor } from "@testing-library/react-hooks";
+import { useBookingState } from "./useBookingState";
+
+describe("useBookingState", () => {
+  it("initializes with default state", () => {
+    const { result } = renderHook(() => useBookingState());
+
+    expect(result.current.booking).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("updates booking when setBooking is called", () => {
+    const { result } = renderHook(() => useBookingState());
+    const mockBooking = { id: "1", title: "Test" };
+
+    act(() => {
+      result.current.setBooking(mockBooking);
+    });
+
+    expect(result.current.booking).toEqual(mockBooking);
+  });
+});
+```
+
+### API Route Testing
+
+```typescript
+// ✅ REQUIRED: API route testing patterns
+import { NextRequest } from "next/server";
+import { GET, POST } from "./route";
+
+// Mock Prisma client
+jest.mock("@/server/db/prisma", () => ({
+  prisma: {
+    booking: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+  },
+}));
+
+describe("/api/bookings", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("GET /api/bookings", () => {
+    it("returns bookings list", async () => {
+      const mockBookings = [{ id: "1", title: "Test Booking" }];
+      (prisma.booking.findMany as jest.Mock).mockResolvedValue(mockBookings);
+
+      const request = new NextRequest("http://localhost:3000/api/bookings");
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toEqual(mockBookings);
+    });
+
+    it("handles database errors", async () => {
+      (prisma.booking.findMany as jest.Mock).mockRejectedValue(
+        new Error("DB Error")
+      );
+
+      const request = new NextRequest("http://localhost:3000/api/bookings");
+      const response = await GET(request);
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe("POST /api/bookings", () => {
+    it("validates input data", async () => {
+      const invalidData = { title: "" }; // Missing required fields
+      const request = new NextRequest("http://localhost:3000/api/bookings", {
+        method: "POST",
+        body: JSON.stringify(invalidData),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+    });
+
+    it("creates booking with valid data", async () => {
+      const validData = {
+        title: "Valid Booking",
+        userId: "user-1",
+        productId: "product-1",
+        startDate: "2024-01-01",
+        endDate: "2024-01-05",
+      };
+
+      const mockCreatedBooking = { id: "1", ...validData };
+      (prisma.booking.create as jest.Mock).mockResolvedValue(
+        mockCreatedBooking
+      );
+
+      const request = new NextRequest("http://localhost:3000/api/bookings", {
+        method: "POST",
+        body: JSON.stringify(validData),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toEqual(mockCreatedBooking);
+    });
+  });
+});
+```
+
+### Utility Function Testing
+
+```typescript
+// ✅ REQUIRED: Pure function testing
+import { calculateBookingTotal, formatCurrency } from "./booking-utils";
+
+describe("calculateBookingTotal", () => {
+  it("calculates total with base price and duration", () => {
+    const booking = {
+      product: { price: 100 },
+      startDate: new Date("2024-01-01"),
+      endDate: new Date("2024-01-05"),
+      discount: 10,
+    };
+
+    const total = calculateBookingTotal(booking);
+    expect(total).toBe(490); // (100 * 5) - 10 = 490
+  });
+
+  it("handles edge cases", () => {
+    expect(calculateBookingTotal(null)).toBe(0);
+    expect(calculateBookingTotal({})).toBe(0);
+  });
+});
+
+describe("formatCurrency", () => {
+  it("formats USD correctly", () => {
+    expect(formatCurrency(1234.56, "USD")).toBe("$1,234.56");
+    expect(formatCurrency(100, "USD")).toBe("$100.00");
+  });
+
+  it("formats THB correctly", () => {
+    expect(formatCurrency(50000, "THB")).toBe("THB 50,000.00");
+  });
+});
+```
+
+## Mocking Standards
+
+### Database Mocking
+
+```typescript
+// ✅ REQUIRED: Consistent Prisma mocking
+import { prisma } from "@/server/db/prisma";
+
+const mockPrisma = {
+  booking: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  user: {
+    findUnique: jest.fn(),
+  },
+};
+
+jest.mock("@/server/db/prisma", () => ({
+  prisma: mockPrisma,
+}));
+```
+
+### External API Mocking
+
+```typescript
+// ✅ REQUIRED: External service mocking
+import * as firebaseService from "@/lib/firebase";
+
+jest.mock("@/lib/firebase", () => ({
+  getBookings: jest.fn(),
+  createBooking: jest.fn(),
+}));
+```
+
+## Test Coverage Requirements
+
+### Minimum Coverage Thresholds
+
+- **Statements**: 80%
+- **Branches**: 75%
+- **Functions**: 85%
+- **Lines**: 80%
+
+### Critical Path Coverage
+
+```typescript
+// ✅ REQUIRED: Test all critical paths
+describe("Booking Creation Flow", () => {
+  it("handles successful booking creation");
+  it("validates required fields");
+  it("handles database errors");
+  it("handles validation errors");
+  it("handles authentication failures");
+  it("handles conflicting bookings");
+  it("handles payment processing");
+});
+```
+
+## Testing Workflow Integration
+
+### Pre-commit Testing
+
+```bash
+# ✅ REQUIRED: Run tests before commits
+npm run test                # Run all tests
+npm run test:coverage      # Check coverage
+npm run test:watch         # Development mode
+```
+
+### CI/CD Integration
+
+```yaml
+# ✅ REQUIRED: CI testing workflow
+test:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: "18"
+    - run: npm ci
+    - run: npm run test:coverage
+    - run: npm run test:e2e
+```
+
+## Error Scenario Testing
+
+### API Error Testing
+
+```typescript
+// ✅ REQUIRED: Test all error scenarios
+describe("API Error Handling", () => {
+  it("returns 400 for invalid input", async () => {
+    // Test validation errors
+  });
+
+  it("returns 401 for unauthorized requests", async () => {
+    // Test auth failures
+  });
+
+  it("returns 404 for not found resources", async () => {
+    // Test missing resources
+  });
+
+  it("returns 500 for server errors", async () => {
+    // Test database failures
+  });
+});
+```
+
+### Component Error Testing
+
+```typescript
+// ✅ REQUIRED: Test error states
+describe("Error States", () => {
+  it("displays error message when API fails", async () => {
+    // Mock API failure
+    render(<BookingList />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+    });
+  });
+
+  it("shows loading state during data fetch", () => {
+    // Mock loading state
+    render(<BookingList />);
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+});
+```
+
+## Performance Testing
+
+### Component Performance Tests
+
+```typescript
+// ✅ RECOMMENDED: Performance testing for critical components
+import { render } from "@testing-library/react";
+
+describe("BookingList Performance", () => {
+  it("renders large lists efficiently", () => {
+    const largeBookingList = Array.from({ length: 1000 }, (_, i) => ({
+      id: `booking-${i}`,
+      title: `Booking ${i}`,
+    }));
+
+    const startTime = performance.now();
+    render(<BookingList bookings={largeBookingList} />);
+    const endTime = performance.now();
+
+    expect(endTime - startTime).toBeLessThan(100); // Under 100ms
+  });
+});
+```
+
+## Related Standards
+
+### Code Quality
+
+- **See**: `.cursor/rules/coding-standards/RULE.md`
+- Well-structured code enables better testing
+- Type safety improves test reliability
+
+### API Standards
+
+- **See**: `.cursor/rules/api-routes/RULE.md`
+- API routes must be designed for testability
+- Error handling patterns enable comprehensive testing
+
+### Database Safety
+
+- **See**: `.cursor/rules/database-safety/RULE.md`
+- Database operations require specific test patterns
+- Migration testing requires rollback validation
+
+## Index of Testing Documentation
+
+### Testing Guides
+
+- `docs/guides/testing.md` - Complete testing guide
+- `docs/guides/refactoring.md` - Testing during refactoring
+- `scripts/README.md` - Testing script documentation
+
+### Test Commands
+
+- `.cursor/commands/smoke-test.md` - Smoke testing workflow
+- `.cursor/commands/checkout-test.md` - Checkout flow testing
+- `.cursor/commands/refactor-test.md` - Refactoring testing checklist
+
+### Coverage Reports
+
+- Test coverage reports generated with `npm run test:coverage`
+- Coverage thresholds defined in `jest.config.js`
