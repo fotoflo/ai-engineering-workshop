@@ -1,208 +1,172 @@
-# AI Engineering Workshop
+# Flexbike Web App
 
-A comprehensive guide and toolkit for building AI agents and skills libraries in complex, production environments.
+Flexbike is a modern Next.js-based web application for renting motorbikes. Built with pnpm and styled using Tailwind CSS, Flexbike allows users to browse motorbikes from trusted rental shops and book directly through the app.
 
-## 🎯 Overview
+## 📚 Documentation
 
-This workshop provides real-world patterns, practices, and tools for engineering AI systems that work effectively in complex environments. Learn how to build maintainable agent architectures, create reusable skills libraries, and establish robust development workflows.
+**🚀 New to Flexbike?** Start here:
+- [**📖 Complete Documentation Hub**](docs/documentation-index.md) - Centralized guides for all aspects
+- [**🎯 Agent Guide**](agents/docs/agents/README.md) - Codebase overview, conventions, and common tasks
+- [**🗄️ Database Guide**](agents/docs/agents/database.md) - Schema management, migrations, and safety protocols
 
-## 🏗️ What's Inside
+## Features
 
-### Agent Development (`AGENTS.md`)
+- **Next.js App Router:** Leverages Next.js’s modern file-based routing.
+- **Responsive Design:** Fully responsive design built with Tailwind CSS.
+- **Custom Fonts:** Optimized font loading using Next.js’s built-in Google Font support and custom CSS.
+- **QR Code Modal:** Display QR codes for downloading the app (optimized for desktop vs. mobile).
+- **Accessibility:** Implemented using [react-modal](https://reactcommunity.org/react-modal/) with proper app element configuration.
+- **Optimized for Performance:** Uses server-side rendering and static generation for fast load times.
 
-Complete guide for building AI agents that can:
-- Navigate complex codebases effectively
-- Follow consistent coding standards
-- Maintain data integrity and safety
-- Work with modern development workflows
-- Integrate with existing toolchains
+## Getting Started
 
-### Skills Library (`.agent/skills/`)
+Follow these instructions to run Flexbike locally.
 
-A collection of production-ready skills that demonstrate best practices:
+### Prerequisites
 
-- **Algorithmic Art** - Generative art with p5.js
-- **Brand Guidelines** - Consistent design systems
-- **Canvas Design** - Visual design tools
-- **Document Co-authoring** - Collaborative documentation workflows
-- **Frontend Design** - Modern UI component libraries
-- **Internal Communications** - Team communication templates
-- **MCP Builder** - Model Context Protocol server development
-- **PDF/PPTX/DOCX** - Document manipulation toolkits
-- **Web Artifacts Builder** - Multi-component web artifacts
-- **Webapp Testing** - Playwright-based testing utilities
-- **Spreadsheet Tools** - Excel/CSV manipulation
+- **Node.js:** Version 14.x or later
+- **pnpm:** Preferred package manager ([Install pnpm](https://pnpm.io/installation))
 
-Each skill includes:
-- Complete documentation
-- Reference implementations
-- Validation tools
-- Usage examples
+### Installation
 
-### Cursor Rules (`.cursor/`)
+1. **Clone the Repository:**
 
-Development standards and workflows for AI-assisted coding:
-
-- **Coding Standards** - TypeScript/React patterns, DRY principles
-- **Database Safety** - Zero data loss procedures
-- **API Development** - Next.js API patterns
-- **Testing Standards** - Comprehensive testing strategies
-- **Git Workflow** - Conventional commits and deployment
-- **Feature Planning** - Deep clarification protocols
-
-### Documentation (`docs/`)
-
-Real-world documentation patterns covering:
-
-- **Architecture** - System design and data flow
-- **Database** - Migration strategies and sync systems
-- **API** - Endpoint design and debugging
-- **Features** - Feature specifications and proposals
-- **Guides** - Development workflows and troubleshooting
-- **Integrations** - Third-party service integrations
-
-## 🚀 Getting Started
-
-### For Agent Developers
-
-1. **Read the Agent Guide**
    ```bash
-   # Start here for understanding agent architecture
-   cat AGENTS.md
+   git clone https://github.com/yourusername/flexbike-web-app.git
+   cd flexbike-web-app
    ```
 
-2. **Explore Skills**
+2. **Install Dependencies:**
+
    ```bash
-   # Browse available skills
-   ls .agent/skills/
-   
-   # Read a skill's documentation
-   cat .agent/skills/frontend-design/SKILL.md
+   pnpm install
    ```
 
-3. **Review Cursor Rules**
+3. **Set Up Environment Variables:**
+
+   Create a `.env.local` file in the root of the project and add the necessary environment variables. Refer to `example.env` for the required keys.
+
    ```bash
-   # Understand development standards
-   ls .cursor/rules/
+   cp example.env .env.local
    ```
 
-### For Skills Library Developers
+4. **Run the Development Server:**
 
-1. **Study Existing Skills**
-   - Review `.agent/skills/` for implementation patterns
-   - Each skill includes a `SKILL.md` with complete documentation
-   - Check `LICENSE.txt` files for usage rights
+   ```bash
+   pnpm dev
+   ```
 
-2. **Create Your Own Skill**
-   - Use `.agent/skills/skill-creator/` as a template
-   - Follow the patterns established in existing skills
-   - Include comprehensive documentation
+   Open [http://localhost:3000](http://localhost:3000) to see the app running.
 
-3. **Validate Your Skill**
-   - Use validation tools in `skill-creator/scripts/`
-   - Ensure your skill follows the established patterns
+## Database Setup & Import
 
-## 📚 Key Concepts
+This project includes comprehensive scripts to set up the database and migrate data from Firebase to Supabase.
 
-### Agent Architecture
+### Quick Setup (Recommended)
 
-Agents in complex environments need:
-- **Clear instructions** - Comprehensive, structured guidance
-- **Safety protocols** - Never commit/build/deploy without permission
-- **Data integrity** - Zero data loss guarantees
-- **Type safety** - Full TypeScript coverage
-- **Testing** - Comprehensive test coverage
+For new environments, use the automated setup script:
 
-### Skills Library Design
-
-Effective skills should:
-- **Be self-contained** - Include all necessary resources
-- **Have clear documentation** - Explain when and how to use
-- **Include examples** - Show real-world usage patterns
-- **Be reusable** - Work across different projects
-- **Follow standards** - Consistent structure and naming
-
-### Development Workflow
-
-Production-ready workflows include:
-- **DRY principles** - Don't repeat yourself
-- **Conventional commits** - Clear, structured commit messages
-- **Safety checks** - Never auto-commit or auto-deploy
-- **Testing** - Unit, integration, and E2E tests
-- **Documentation** - Keep docs in sync with code
-
-## 🛠️ Best Practices
-
-### Code Quality
-
-- **Clear variable names** - Never use `data`, `result`, `temp`
-- **Extract reusable logic** - Functions max 50 lines
-- **Type safety first** - Full TypeScript coverage
-- **Component patterns** - Functional components with hooks
-
-### Database Operations
-
-- **Never reset without backups** - Zero data loss guarantee
-- **Validate transformations** - Test before sync
-- **Manual review** - Required for production migrations
-- **Schema-first** - Always update Prisma schema first
-
-### API Development
-
-- **Validate all inputs** - Use Zod schemas
-- **Consistent error handling** - Proper error types
-- **Type-safe responses** - Use generated types
-- **Transaction safety** - Use transactions for multi-step operations
-
-## 📖 Documentation Structure
-
-```
-docs/
-├── architecture/     # System design and patterns
-├── database/         # Schema, migrations, sync
-├── api/              # Endpoint design and examples
-├── features/         # Feature specifications
-├── guides/           # Development workflows
-└── integrations/     # Third-party services
+```bash
+npm run import:setup
 ```
 
-## 🔧 Tools & Technologies
+This script will:
 
-This workshop demonstrates patterns for:
-- **Next.js** - App Router, API routes
-- **TypeScript** - Type-safe development
-- **Prisma** - Database ORM
-- **Zod** - Schema validation
-- **React** - Component patterns
-- **Testing** - Jest, React Testing Library, Playwright
+- Start the Next.js dev server (if not running)
+- Set up the database schema with Prisma
+- Import all data from Firebase (~19,743 records)
+- Run location seeding for cities/regions/countries
+- Verify the import worked correctly
 
-## 🤝 Contributing
+### Manual Setup
 
-This is a workshop repository showcasing real-world patterns. Feel free to:
-- Use these patterns in your own projects
-- Adapt the skills for your needs
-- Share improvements and feedback
-- Create your own skills following these patterns
+If you prefer to run steps individually:
 
-## 📝 License
+1. **Start the dev server:**
 
-Skills include their own license files. Check individual `LICENSE.txt` files in each skill directory.
+   ```bash
+   npm run dev
+   ```
 
-## 🎓 Learning Path
+2. **Set up database schema:**
 
-1. **Start with AGENTS.md** - Understand agent architecture
-2. **Explore .cursor/rules/** - Learn development standards
-3. **Study .agent/skills/** - See skills library patterns
-4. **Review docs/** - Understand documentation structure
-5. **Build your own** - Create skills following these patterns
+   ```bash
+   npx prisma db push --accept-data-loss
+   ```
 
-## 🔗 Related Resources
+3. **Import data:**
 
-- [Cursor Rules Documentation](.cursor/rules/)
-- [Agent Instructions](AGENTS.md)
-- [Skills Library](.agent/skills/)
-- [Development Guides](docs/guides/)
+   ```bash
+   npm run import:full  # Full import (~19k records)
+   npm run import:small # Small import for testing (100 records)
+   ```
 
----
+4. **Seed location data:**
+   ```bash
+   node scripts/seed-locations.cjs
+   ```
 
-**Built for complex environments. Designed for production. Ready for scale.**
+### Import Scripts
+
+- **`npm run import:setup`**: Complete automated setup (recommended)
+- **`npm run import:full`**: Import all data from Firebase
+- **`npm run import:small`**: Limited import for testing (100 records each)
+- **`npm run db:import-full`**: Legacy full database import script
+- **`npm run db:import-by-companies`**: Import companies only
+- **`npm run db:import-by-bookings`**: Import bookings only
+- **`npm run db:import-messages`**: Import messages only
+- **`npm run db:import-by-reviews`**: Import reviews only
+
+### Verification & Testing
+
+After import, verify everything works:
+
+```bash
+# Test Chiang Mai search (should return bikes)
+curl "http://localhost:3000/thailand/northern-thailand/chiang-mai/bikes"
+
+# Check company count
+curl "http://localhost:3000/api/companies?take=1" | jq length
+
+# Use Prisma Studio to browse data
+npx prisma studio
+```
+
+### Import Data Summary
+
+The full import includes:
+
+- **357 companies** with rental locations
+- **1,897 products** (bikes/scooters)
+- **4,417 bookings** and reservations
+- **1,649 conversations** between users
+- **185 reviews** and ratings
+- **9,619 messages** in conversations
+- **Location data**: 27 countries, 79 regions, 108 cities
+
+### Troubleshooting
+
+**Import fails with authentication errors:**
+
+- Ensure `SYNC_API_KEY` is set in `.env.local`
+- Make sure the dev server is running on `localhost:3000`
+
+**Database connection issues:**
+
+- Check your `DATABASE_URL` in `.env.local`
+- Run `npx prisma db push --accept-data-loss` to set up schema
+
+**Location seeding fails:**
+
+- Run `npx prisma db push` first to ensure tables exist
+- Then run `node scripts/seed-locations.cjs`
+
+### Preview Scripts (for debugging)
+
+To verify data transformation without importing:
+
+- `npm run db:preview-company -- --id <firestore-doc-id>`
+- `npm run db:preview-product -- --id <firestore-doc-id>`
+- `npm run db:preview-booking -- --id <firestore-doc-id>`
+- `npm run db:preview-review -- --id <firestore-doc-id>`
+- `npm run db:preview-user -- --id <firestore-doc-id>`

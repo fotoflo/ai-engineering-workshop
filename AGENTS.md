@@ -47,7 +47,7 @@ Welcome, AI agent! This document contains essential instructions for working eff
 
 **Database & Data Management:**
 
-- `docs/database/README.md` - Database overview and navigation
+- `docs/database/database-overview.md` - Database overview and navigation
 - `docs/database/schema.md` - Complete schema reference
 - `docs/database/migration-guide.md` - Safe migration procedures
 - `docs/database/firebase-supabase-sync.md` - Real-time sync system
@@ -55,7 +55,7 @@ Welcome, AI agent! This document contains essential instructions for working eff
 
 **API Documentation:**
 
-- `docs/api/README.md` - API overview and patterns
+- `docs/api/examples.md` - API usage examples and patterns
 - `docs/api/authentication.md` - Authentication and authorization
 - `docs/api/search.md` - Search API and functionality
 - `docs/api/examples.md` - Usage examples and integration
@@ -63,7 +63,7 @@ Welcome, AI agent! This document contains essential instructions for working eff
 
 **Features & Business Logic:**
 
-- `docs/features/README.md` - Features overview
+- `docs/documentation-index.md` - Complete documentation index (includes features)
 - `docs/features/bookings.md` - Booking system specification
 - `docs/features/checkout-flow.md` - Checkout process documentation
 - `docs/features/admin-calendar.md` - Admin calendar interface
@@ -120,7 +120,7 @@ Welcome, AI agent! This document contains essential instructions for working eff
 
 **Starting New Feature:**
 
-- Read: `docs/features/README.md`, `docs/planning/proposals/`
+- Read: `docs/documentation-index.md` (features section), `docs/planning/proposals/`
 - Follow: `.cursor/rules/coding-standards.mdc`, `.cursor/rules/git-commits.mdc`
 - Test: `.cursor/commands/checkout-test.md` (for checkout features)
 
@@ -132,7 +132,7 @@ Welcome, AI agent! This document contains essential instructions for working eff
 
 **API Development:**
 
-- Read: `docs/api/README.md`, `docs/api/examples.md`, `docs/api/authentication.md`
+- Read: `docs/api/examples.md`, `docs/api/search-debugging.md`
 - Follow: `.cursor/rules/api-routes.mdc`
 - Test: `docs/guides/api-testing.md`, `.cursor/commands/smoke-test.md`
 
@@ -151,7 +151,7 @@ Welcome, AI agent! This document contains essential instructions for working eff
 **Documentation & Specifications:**
 
 - Read: `.cursor/rules/specification-writing.mdc`
-- Follow: `docs/README.md` for organization
+- Follow: `docs/documentation-index.md` for organization
 - Reference: `docs/guides/` for specific topics
 
 ## 🔧 Working Standards
@@ -533,15 +533,17 @@ export async function getUserProfile(id: string) {
 When users ask you to perform tasks, check if any of the available skills below can help complete the task more effectively. Skills provide specialized capabilities and domain knowledge.
 
 How to use skills:
+
 - Invoke: Bash("openskills read <skill-name>")
 - The skill content will load with detailed instructions on how to complete the task
 - Base directory provided in output for resolving bundled resources (references/, scripts/, assets/)
 
 Usage notes:
+
 - Only use skills listed in <available_skills> below
 - Do not invoke a skill that is already loaded in your context
 - Each skill invocation is stateless
-</usage>
+  </usage>
 
 <available_skills>
 
@@ -648,6 +650,7 @@ Usage notes:
 </skill>
 
 </available_skills>
+
 <!-- SKILLS_TABLE_END -->
 
 </skills_system>
