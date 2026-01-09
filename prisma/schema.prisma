@@ -1,0 +1,623 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+generator zod {
+  provider = "npx zod-prisma-types"
+  output   = "./generated/zod"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model bookings {
+  id                       String           @id @default(uuid())
+  productId                String
+  companyId                String?
+  userId                   String?
+  status                   BookingStatus    @default(OFFLINE_BOOKING)
+  paymentStatus            PaymentStatus    @default(unpaid)
+  bookingType              BookingType      @default(confirmation_required)
+  startDate                DateTime?
+  endDate                  DateTime?
+  currency                 CurrencyCode
+  totalPrice               Decimal?         @db.Decimal(18, 2)
+  price                    Decimal?         @db.Decimal(18, 2)
+  deposit                  Decimal?         @db.Decimal(18, 2)
+  deliveryAddress          String?
+  deliveryCharge           Decimal?         @db.Decimal(18, 2)
+  requestedDelivery        Boolean?         @default(false)
+  collectionTime           String?
+  deliveryTime             String?
+  deliveryTimestamp        DateTime? // Full datetime for delivery scheduling
+  bookingMade              DateTime?
+  responded                DateTime?
+  requestedAt              DateTime?
+  paymentIntentId          String?
+  monthlySub               Boolean?         @default(false)
+  planType                 BookingPlanType?
+  subActive                Boolean?         @default(false)
+  marketplaceBooking       Boolean?         @default(false)
+  numHelmets               Int?
+  rentalAgreementPdfUrl    String?
+  riderName                String?
+  customerWhatsappNumber   String?
+  directPayment            Boolean?         @default(false)
+  internalNote             String?
+  shopNote                 String?
+  customerNote             String?
+  acceptSimilarProducts    Boolean?         @default(false)
+  acceptSimilarCompanies   Boolean?         @default(false)
+  contactIfNotAvailable    Boolean?         @default(false)
+  isOtpVerified            Boolean?         @default(false)
+  chatThreadId             String?
+  specialRequests          String?
+  hostNotes                String?
+  images                   Json?
+  handoverData             Json?
+  version                  Decimal?         @default("1") @db.Decimal(18, 2)
+  cancelReason             String?
+  handOverConfirmationCode String?
+  handOverConfirmed        Boolean?         @default(false)
+  paidOut                  Boolean?         @default(false)
+  reviewed                 Boolean?         @default(false)
+  priceBaseCents           Int?
+  feeRateBps               Int              @default(1500)
+  feeCents                 Int?
+  totalCents               Int?
+  stripeCheckoutId         String?          @unique
+  checksum                 String?
+  lockedUntil              DateTime?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @default(now())
+  amountPaidCents          Int?
+  updatedBySource          String? // 'firebase' | 'supabase'
+  syncVersion              BigInt? // Monotonic version for conflict resolution
+
+  // Additional Firebase fields commonly used
+  subscriptionId    String? // Stripe subscription ID
+  chargeId          String? // Alternative payment reference
+  payoutArrivalDate DateTime? // When payout was received
+
+  // Relations
+  company companies? @relation(fields: [companyId], references: [id])
+  product products?  @relation(fields: [productId], references: [id])
+  user    users?     @relation(fields: [userId], references: [id])
+
+  @@index([companyId])
+  @@index([productId])
+  @@index([riderName])
+  @@index([userId])
+  @@index([companyId, startDate, endDate])
+  @@index([startDate, endDate])
+  @@index([companyId, status])
+}
+
+model cities {
+  id           String   @id @default(uuid())
+  countrySlug  String
+  regionSlug   String?
+  citySlug     String
+  name         String?
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  rank         Int?
+  productCount Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  @@unique([countrySlug, citySlug])
+  @@index([id])
+  @@index([countrySlug, name])
+  @@index([countrySlug, regionSlug])
+  @@index([rank, name])
+}
+
+model companies {
+  id                     String                      @id @default(uuid())
+  name                   String?                     @db.VarChar(255)
+  slug                   String                      @unique(map: "uix_companies_slug") @db.VarChar(255)
+  description            String?
+  companyAddress         String?                     @db.VarChar(255)
+  country                String?
+  countrySlug            String?
+  region                 String?
+  regionSlug             String?
+  city                   String?
+  citySlug               String?
+  area                   String?
+  coordinates            Json?
+  phoneNumber            String?
+  whatsappNumber         String?                     @db.VarChar(255)
+  lineId                 String?                     @db.VarChar(255)
+  email                  String?
+  website                String?
+  rating                 Int?
+  reviewCount            Int?
+  profileImage           String?
+  bannerImage            String?
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @default(now())
+  claimed                Boolean?                    @default(false)
+  blocked                Boolean?                    @default(false)
+  hasBankAccount         Boolean?                    @default(false)
+  deliveryAvailable      Boolean?                    @default(false)
+  collectionAvailable    Boolean?                    @default(false)
+  isOnboarded            Boolean?                    @default(false)
+  instantBookingEnabled  Boolean?                    @default(false)
+  currency               CurrencyCode?                @default(IDR)
+  opening_hours          Json?
+  stripeConnectAccountId String?
+  stripeAccountStatus    StripeAccountStatus?
+  minimumBookingDays     Int?
+  minimumDeliveryDays    Int?
+  minimumCollectionDays  Int?
+  acceptsStripe          Boolean?                    @default(false)
+  acceptsSubscription    Boolean?                    @default(false)
+  paymentModes           String[]                    @default([])
+  contactMethods         Json?
+  responseTime           Int?
+  averageResponseTime    Int?
+  acceptanceRate         Int?
+  languages              String[]
+  specialties            String[]
+  isFlagged              Boolean?                    @default(false)
+  flagReason             String?
+  searchPriority         Int?                        @default(0)
+  blockAdmin             String?
+  blockReason            String?
+  blockedAt              DateTime?
+  bookings               bookings[]
+  products               products[]
+  contacts               company_contacts[]
+  locations              company_locations[]
+  occupancyHistory       company_occupancy_history[]
+  revenueHistory         company_revenue_history[]
+  invitations            invitations[]
+
+  @@index([citySlug])
+  @@index([countrySlug])
+  @@index([countrySlug, regionSlug, citySlug])
+  @@index([countrySlug, regionSlug])
+  @@index([name])
+}
+
+model company_occupancy_history {
+  id              String   @id @default(uuid())
+  companyId       String
+  date            DateTime @db.Date
+  occupancy       Int // Percentage 0-100
+  productsBooked  Int
+  productsDormant Int
+  totalProducts   Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company companies @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date], map: "uix_company_occupancy_history_company_date")
+  @@index([companyId, date])
+  @@index([date])
+}
+
+model company_revenue_history {
+  id           String       @id @default(uuid())
+  companyId    String
+  date         DateTime     @db.Date
+  revenue      Decimal      @db.Decimal(18, 2)
+  currency     CurrencyCode
+  bookingCount Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  company companies @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date], map: "uix_company_revenue_history_company_date")
+  @@index([companyId, date])
+  @@index([date])
+}
+
+model company_contacts {
+  id           String         @id @default(uuid())
+  companyId    String
+  company      companies      @relation(fields: [companyId], references: [id])
+  channel      ContactChannel
+  value        String
+  displayLabel String?
+  isPrimary    Boolean?       @default(false)
+  isActive     Boolean?       @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @default(now())
+
+  @@index([companyId])
+  @@index([id])
+}
+
+model company_locations {
+  id             String    @id @default(uuid())
+  companyId      String
+  company        companies @relation(fields: [companyId], references: [id])
+  original       String
+  normalizedCity String?
+  area           String?
+  admin2         String?
+  admin1         String?
+  country        String?
+  postalCode     String?
+  latitude       Decimal?  @db.Decimal(9, 6)
+  longitude      Decimal?  @db.Decimal(9, 6)
+  confidence     Decimal?  @db.Decimal(3, 2)
+  sourceMethod   String?
+  normalizedAt   DateTime  @default(now())
+  notes          String?
+  isPrimary      Boolean   @default(false)
+
+  @@unique([companyId, isPrimary])
+  @@index([companyId])
+  @@index([id])
+}
+
+model conversations {
+  id            String    @id @default(uuid())
+  userId        String
+  companyId     String
+  bookingId     String?
+  subject       String?   @db.VarChar(255)
+  status        String    @default("active")
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now())
+
+  messages messages[]
+
+  @@index([bookingId])
+  @@index([companyId])
+  @@index([id])
+  @@index([status])
+  @@index([userId])
+}
+
+model countries {
+  id           String   @id @default(uuid())
+  countrySlug  String   @unique
+  name         String?
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  rank         Int?
+  productCount Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  @@index([id])
+  @@index([rank, name])
+}
+
+model history {
+  id        String   @id @default(uuid())
+  type      String
+  entityId  String
+  status    String?
+  timestamp DateTime @default(now())
+  note      String?
+  actor     String?
+  payload   Json?
+
+  @@index([id])
+  @@index([type, entityId])
+}
+
+model messages {
+  id             String    @id @default(uuid())
+  conversationId String
+  senderId       String
+  senderType     String    @default("user")
+  content        String
+  messageType    String    @default("text")
+  isRead         Boolean   @default(false)
+  readAt         DateTime?
+  readBy         Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now())
+
+  conversation conversations @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([id])
+  @@index([isRead])
+  @@index([senderId])
+}
+
+model migration_logs {
+  id               String    @id @default(uuid())
+  migrationType    String
+  collection       String
+  status           String
+  recordsProcessed Int       @default(0)
+  recordsTotal     Int       @default(0)
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  duration         Int?
+  errors           Json?
+  notes            String?
+
+  @@index([id])
+  @@map("migration_logs")
+}
+
+model products {
+  id                  String            @id @default(uuid())
+  companyId           String
+  type                ProductType
+  title               String            @db.VarChar(255)
+  slug                String            @db.VarChar(255)
+  description         String?
+  currency            CurrencyCode
+  pricePerDay         Decimal?          @db.Decimal(18, 2)
+  weeklyPrice         Decimal?          @db.Decimal(18, 2)
+  monthlyPrice        Decimal?          @db.Decimal(18, 2)
+  deposit             Decimal?          @db.Decimal(18, 2)
+  rating              Int?
+  score               Int?
+  averageReviewScore  Int?
+  reviewCount         Int?
+  totalBookings       Int?
+  isAvailable         Boolean?          @default(true)
+  images              Json?
+  tags                String[]
+  coordinates         Json?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @default(now())
+  searchPriority      Int?              @default(0)
+  area                String?           @db.VarChar(255)
+  blockReason         String?
+  blocked             Boolean?          @default(false)
+  blockedAt           DateTime?
+  blockedBy           String?
+  category            String?           @db.VarChar(255)
+  collectionAvailable Boolean?          @default(true)
+  deliveryAvailable   Boolean?          @default(false)
+  geohash             String?           @db.VarChar(255)
+  instantBook         Boolean?          @default(false)
+  minimumBookingDays  Int?              @default(1)
+  minimumDeliveryDays Int?              @default(0)
+  bookings            bookings[]
+  company             companies         @relation(fields: [companyId], references: [id])
+  vehicle             vehicle_products?
+
+  @@unique([companyId, slug])
+  @@index([companyId])
+  @@index([pricePerDay])
+  @@index([type, isAvailable])
+}
+
+model regions {
+  id           String   @id @default(uuid())
+  countrySlug  String
+  regionSlug   String
+  name         String?
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  rank         Int?
+  productCount Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  @@unique([countrySlug, regionSlug])
+  @@index([countrySlug])
+  @@index([countrySlug, rank, name])
+  @@index([rank, name])
+}
+
+model reviews {
+  id                String   @id @default(uuid())
+  companyId         String?
+  productId         String?
+  bookingId         String?
+  userId            String?
+  riderName         String?
+  riderProfileImage String?
+  rating            Int
+  text              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([companyId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model users {
+  id                  String        @id @default(uuid())
+  firstName           String?
+  lastName            String?
+  phoneNumber         String?       @db.VarChar(255)
+  whatsappNumber      String?       @db.VarChar(255)
+  totalBookings       Int?
+  joinDate            DateTime?
+  verificationStatus  String?
+  companyId           String?
+  companyIds          Json?
+  email               String? // Note: Not unique due to existing duplicate emails from Firebase migration
+  profileImage        String?
+  stripeCustomerId    String?       @db.VarChar(255)
+  godMode             Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @default(now())
+  role                UserRole      @default(CUSTOMER)
+  supabaseId          String? // Supabase auth user ID
+  updatedBySource     String? // 'firebase' | 'supabase'
+  syncVersion         BigInt? // Monotonic version for conflict resolution
+  bookings            bookings[]
+  invitations         invitations[] @relation("InvitationUser")
+  reviewedInvitations invitations[] @relation("InvitationReviewedBy")
+
+  @@index([companyId])
+  @@index([email])
+  @@index([role])
+  @@index([supabaseId])
+  @@index([firstName])
+  @@index([lastName])
+}
+
+model invitations {
+  id             String           @id @default(uuid())
+  userId         String
+  companyId      String
+  type           InvitationType   @default(JOIN_REQUEST)
+  status         InvitationStatus @default(PENDING)
+  message        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now())
+  reviewedAt     DateTime?
+  reviewedBy     String? // User ID of the reviewer
+  reviewedByUser users?           @relation("InvitationReviewedBy", fields: [reviewedBy], references: [id])
+
+  // Relations
+  user    users     @relation("InvitationUser", fields: [userId], references: [id], onDelete: Cascade)
+  company companies @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId, type]) // Prevent duplicate requests of same type
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([companyId, status])
+  @@index([companyId, type, status])
+}
+
+model vehicle_products {
+  productId           String    @id
+  model               String?
+  displacement        Int?
+  year                String?   @db.VarChar(255)
+  plate               String?   @db.VarChar(255)
+  surfRack            Boolean?
+  keyless             Boolean?
+  abs                 Boolean?
+  condition           String?
+  size                String?
+  color               String?
+  vehicleType         String?   @db.VarChar(255)
+  transmission        String?
+  fuelType            String?
+  seats               String?
+  doors               String?
+  luggage             String?
+  engineSize          String?
+  fuelEfficiency      String?
+  phoneHolder         Boolean?
+  isElectric          Boolean?
+  electricRange       String?
+  electricTopSpeed    String?
+  electricPower       String?
+  availabilityStatus  String?   @default("available")
+  lastMaintenanceDate DateTime?
+  nextMaintenanceDate DateTime?
+  fuelLevel           Int?
+  batteryHealth       Int?
+  insuranceInfo       Json?
+  pickupInstructions  String?
+  returnInstructions  String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now())
+
+  // Relations
+  product products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([model])
+  @@index([vehicleType])
+}
+
+enum BookingPlanType {
+  SUBSCRIBE
+  PAYG
+}
+
+enum BookingStatus {
+  draft
+  requested
+  accepted
+  rejected
+  rejected_by_host
+  pending_payment
+  confirmed
+  review_required
+  completed
+  cancelled
+  rejected_by_customer
+  expired
+  OFFLINE_BOOKING
+}
+
+enum BookingType {
+  instant
+  confirmation_required
+}
+
+enum ContactChannel {
+  WHATSAPP
+  LINE
+  VIBER
+  TELEGRAM
+  PHONE
+  EMAIL
+  WECHAT
+  ZALO
+}
+
+enum CurrencyCode {
+  IDR
+  VND
+  THB
+  USD
+  EUR
+  GBP
+  AUD
+  SGD
+  MYR
+  PHP
+  JPY
+  KRW
+  CNY
+}
+
+enum PaymentStatus {
+  unpaid
+  paid
+  refunded
+  failed
+}
+
+enum ProductType {
+  VEHICLE
+  ACCESSORY
+  SERVICE
+}
+
+enum StripeAccountStatus {
+  ACTIVE
+  PENDING
+  RESTRICTED
+  DISABLED
+}
+
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  VENDOR_OWNER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum InvitationType {
+  JOIN_REQUEST
+}
+
+enum InvitationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
